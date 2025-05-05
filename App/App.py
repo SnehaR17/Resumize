@@ -236,6 +236,7 @@ def run():
 
             ### parsing and extracting whole resume 
             resume_data = ResumeParser(save_image_path).get_extracted_data()
+            
             if resume_data:
                 
                 ## Get the whole resume data into resume_text
@@ -256,43 +257,48 @@ def run():
                     pass
                 ## Predicting Candidate Experience Level 
 
-                ### Trying with different possibilities
+                import re
+                text = resume_text.lower()
+                pages = resume_data.get('no_of_pages', 0)
                 cand_level = ''
-                if resume_data['no_of_pages'] < 1:                
+                if pages == 0:
                     cand_level = "NA"
-                    st.markdown( '''<h4 style='text-align: left; color: #d73b5c;'>You are at Fresher level!</h4>''',unsafe_allow_html=True)
-                
-                #### if internship then intermediate level
-                elif 'INTERNSHIP' in resume_text:
+                    st.markdown(
+                        "<h4 style='text-align: left; color: #d73b5c;'>No resume detected (NA)</h4>",
+                        unsafe_allow_html=True
+                    )
+
+                # 2) ≤1 page, no mention of internships → Fresher
+                elif pages <= 1 and 'internship' not in text:
+                    cand_level = "Fresher"
+                    st.markdown(
+                        "<h4 style='text-align: left; color: #d73b5c;'>You are at Fresher level!</h4>",
+                        unsafe_allow_html=True
+                    )
+
+                # 3) Any mention of “internship”
+                elif 'internship' in text:
                     cand_level = "Intermediate"
-                    st.markdown('''<h4 style='text-align: left; color: #1ed760;'>You are at intermediate level!</h4>''',unsafe_allow_html=True)
-                elif 'INTERNSHIPS' in resume_text:
-                    cand_level = "Intermediate"
-                    st.markdown('''<h4 style='text-align: left; color: #1ed760;'>You are at intermediate level!</h4>''',unsafe_allow_html=True)
-                elif 'Internship' in resume_text:
-                    cand_level = "Intermediate"
-                    st.markdown('''<h4 style='text-align: left; color: #1ed760;'>You are at intermediate level!</h4>''',unsafe_allow_html=True)
-                elif 'Internships' in resume_text:
-                    cand_level = "Intermediate"
-                    st.markdown('''<h4 style='text-align: left; color: #1ed760;'>You are at intermediate level!</h4>''',unsafe_allow_html=True)
-                
-                #### if Work Experience/Experience then Experience level
-                # elif 'EXPERIENCE' in resume_text:
-                #     cand_level = "Experienced"
-                #     st.markdown('''<h4 style='text-align: left; color: #fba171;'>You are at experience level!''',unsafe_allow_html=True)
-                elif 'WORK EXPERIENCE' in resume_text:
+                    st.markdown(
+                        "<h4 style='text-align: left; color: #1ed760;'>You are at Intermediate level!</h4>",
+                        unsafe_allow_html=True
+                    )
+
+                # 4) A true “experience” section header — match whole word, optionally preceded by “work”
+                elif re.search(r'\b(work\s+)?experience\b', text):
                     cand_level = "Experienced"
-                    st.markdown('''<h4 style='text-align: left; color: #fba171;'>You are at experience level!''',unsafe_allow_html=True)
-                # elif 'Experience' in resume_text:
-                #     cand_level = "Experienced"
-                #     st.markdown('''<h4 style='text-align: left; color: #fba171;'>You are at experience level!''',unsafe_allow_html=True)
-                elif 'Work Experience' in resume_text:
-                    cand_level = "Experienced"
-                    st.markdown('''<h4 style='text-align: left; color: #fba171;'>You are at experience level!''',unsafe_allow_html=True)
+                    st.markdown(
+                        "<h4 style='text-align: left; color: #fba171;'>You are at Experienced level!</h4>",
+                        unsafe_allow_html=True
+                    )
+
+                # 5) Fallback → Fresher, with the correct “Fresher” colour
                 else:
                     cand_level = "Fresher"
-                    st.markdown('''<h4 style='text-align: left; color: #fba171;'>You are at Fresher level!!''',unsafe_allow_html=True)
-
+                    st.markdown(
+                        "<h4 style='text-align: left; color: #d73b5c;'>You are at Fresher level!</h4>",
+                        unsafe_allow_html=True
+                    )
 
                 ## Skills Analyzing and Recommendation
                 st.subheader("**Skills Recommendation 💡**")
@@ -301,209 +307,285 @@ def run():
                 keywords = st_tags(label='### Your Current Skills',
                 text='See our skills recommendation below',value=resume_data['skills'],key = '1  ')
 
-                ### Keywords for Recommendations
-                ds_keyword = ['tensorflow','keras','pytorch','machine learning','deep Learning','flask','streamlit']
-                web_keyword = ['react', 'django', 'node jS', 'react js', 'php', 'laravel', 'magento', 'wordpress','javascript', 'angular js', 'C#', 'Asp.net', 'flask']
-                android_keyword = ['android','android development','flutter','kotlin','xml','kivy']
-                ios_keyword = ['ios','ios development','swift','cocoa','cocoa touch','xcode']
-                uiux_keyword = ['ux','adobe xd','figma','zeplin','balsamiq','ui','prototyping','wireframes','storyframes','adobe photoshop','photoshop','editing','adobe illustrator','illustrator','adobe after effects','after effects','adobe premier pro','premier pro','adobe indesign','indesign','wireframe','solid','grasp','user research','user experience']
-                n_any = ['english','communication','writing', 'microsoft office', 'leadership','customer management', 'social media']
+                ds_keyword = [
+                # Core ML/DL frameworks & libraries
+                'tensorflow', 'keras', 'pytorch', 'scikit-learn', 'xgboost', 'lightgbm', 'catboost', 'mlflow',
+                # Data manipulation & analysis
+                'pandas', 'numpy', 'scipy', 'dask', 'vaex',
+                # Data viz & reporting
+                'matplotlib', 'seaborn', 'plotly', 'bokeh', 'dash', 'ggplot',
+                # Specialized AI
+                'computer vision', 'opencv', 'natural language processing', 'nlp', 'spaCy', 'nltk', 'transformers', 'bert', 'gpt',
+                # Statistical & classical methods
+                'regression', 'classification', 'clustering', 'time series', 'ARIMA', 'bayesian inference', 'hypothesis testing',
+                # Advanced topics
+                'reinforcement learning', 'deep reinforcement learning', 'rnn', 'lstm', 'gru', 'cnn', 'gan', 'autoencoder',
+                # Data platforms & tooling
+                'hadoop', 'spark', 'hive', 'kafka', 'airflow', 'kubernetes', 'docker', 'bigquery', 'redshift',
+                # General DS concepts
+                'feature engineering', 'hyperparameter tuning', 'cross validation', 'model deployment', 'mLOps', 'data pipeline'
+                ]
+
+                web_keyword = [
+                    # Frontend frameworks & libraries
+                    'react', 'react js', 'vue', 'angular js', 'svelte', 'ember.js', 'jquery',
+                    # Backend frameworks & languages
+                    'django', 'flask', 'express.js', 'node js', 'asp.net', 'spring boot', 'ruby on rails', 'php', 'laravel', 'magento',
+                    # Full-stack ecosystems
+                    'next.js', 'nuxt.js', 'gatsby', 'meteor',
+                    # Web fundamentals
+                    'html5', 'css3', 'sass', 'less', 'javascript', 'typescript',
+                    # APIs & data exchange
+                    'rest api', 'graphql', 'apollo', 'soap',
+                    # DevOps & hosting
+                    'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'netlify', 'heroku', 'firebase',
+                    # CMS & e-commerce
+                    'wordpress', 'drupal', 'joomla', 'shopify', 'woocommerce',
+                    # Testing & quality
+                    'jest', 'mocha', 'chai', 'jasmine', 'cypress', 'selenium',
+                    # Build tools & bundlers
+                    'webpack', 'rollup', 'parcel', 'gulp', 'grunt'
+                ]
+
+                android_keyword = [
+                    'android', 'android development', 'android sdk', 'android studio', 'java', 'kotlin', 'flutter', 'react native',
+                    'jetpack compose', 'xml layouts', 'material design', 'gradle', 'retrofit', 'okhttp', 'room', 'liveData', 'viewModel',
+                    'mvvm', 'mvp', 'ndk', 'jni', 'firebase', 'google play services', 'arcore', 'jetpack', 'constraint layout'
+                ]
+
+                ios_keyword = [
+                    'ios', 'ios development', 'xcode', 'swift', 'objective-c', 'swiftui', 'uikit', 'cocoa', 'cocoa touch',
+                    'interface builder', 'testflight', 'core data', 'core animation', 'core graphics', 'core ml', 'arkit', 'spritekit',
+                    'scenekit', 'mvvm', 'vipER', 'combine', 'swift package manager', 'cocoapods', 'carthage', 'autolayout', 'storyboard'
+                ]
+
+                uiux_keyword = [
+                    # Design tools
+                    'figma', 'sketch', 'adobe xd', 'invision', 'axure rp', 'balsamiq', 'zeplin', 'miro', 'principle',
+                    # Visual design
+                    'adobe photoshop', 'photoshop', 'adobe illustrator', 'illustrator', 'adobe after effects', 'after effects',
+                    'adobe premiere pro', 'premiere pro', 'adobe indesign', 'indesign',
+                    # UX fundamentals
+                    'user research', 'user persona', 'user journey', 'information architecture', 'interaction design', 'accessibility',
+                    'usability testing', 'heuristic evaluation', 'wireframes', 'prototyping', 'storyboards', 'user flows',
+                    # UI patterns & systems
+                    'design system', 'atomic design', 'responsive design', 'typography', 'color theory', 'iconography', 'style guide',
+                    # Collaboration & workflow
+                    'design thinking', 'agile ux', 'lean ux', 'wireframe', 'high fidelity mockup', 'low fidelity prototype', 'empathy map'
+                ]
+
+                n_any = [
+                    'english', 'communication', 'writing', 'public speaking', 'presentation', 'microsoft office', 'excel', 'powerpoint',
+                    'leadership', 'teamwork', 'project management', 'agile', 'scrum', 'kanban', 'time management', 'critical thinking',
+                    'problem solving', 'customer management', 'stakeholder management', 'social media', 'seo', 'sem', 'digital marketing',
+                    'research', 'data analysis', 'negotiation', 'mentoring'
+                ]
+
+
                 ### Skill Recommendations Starts                
-                recommended_skills = []
-                reco_field = ''
-                rec_course = ''
+                ### Skill Recommendations Starts                
+                # import re
 
-                ### condition starts to check skills from keywords and predict field
-                for i in resume_data['skills']:
-                
-                    #### Data science recommendation
-                    if i.lower() in ds_keyword:
-                        print(i.lower())
-                        reco_field = 'Data Science'
-                        st.success("** Our analysis says you are looking for Data Science Jobs.**")
-                        recommended_skills = ['Data Visualization','Predictive Analysis','Statistical Modeling','Data Mining','Clustering & Classification','Data Analytics','Quantitative Analysis','Web Scraping','ML Algorithms','Keras','Pytorch','Probability','Scikit-learn','Tensorflow',"Flask",'Streamlit']
-                        recommended_keywords = st_tags(label='### Recommended skills for you.',
-                        text='Recommended skills generated from System',value=recommended_skills,key = '2')
-                        st.markdown('''<h5 style='text-align: left; color: #1ed760;'>Adding this skills to resume will boost🚀 the chances of getting a Job</h5>''',unsafe_allow_html=True)
-                        # course recommendation
-                        rec_course = course_recommender(ds_course)
-                        break
+                # Normalize
+                resume_skills_cleaned = [s.lower().replace(' ', '') for s in resume_data['skills']]
+                resume_text_cleaned = resume_text.lower()
 
-                    #### Web development recommendation
-                    elif i.lower() in web_keyword:
-                        print(i.lower())
-                        reco_field = 'Web Development'
-                        st.success("** Our analysis says you are looking for Web Development Jobs **")
-                        recommended_skills = ['React','Django','Node JS','React JS','php','laravel','Magento','wordpress','Javascript','Angular JS','c#','Flask','SDK']
-                        recommended_keywords = st_tags(label='### Recommended skills for you.',
-                        text='Recommended skills generated from System',value=recommended_skills,key = '3')
-                        st.markdown('''<h5 style='text-align: left; color: #1ed760;'>Adding this skills to resume will boost🚀 the chances of getting a Job💼</h5>''',unsafe_allow_html=True)
-                        # course recommendation
-                        rec_course = course_recommender(web_course)
-                        break
+                # Define domains
+                domain_keywords = {
+                    'Data Science': ds_keyword,
+                    'Web Development': web_keyword,
+                    'Android Development': android_keyword,
+                    'IOS Development': ios_keyword,
+                    'UI-UX Development': uiux_keyword,
+                }
 
-                    #### Android App Development
-                    elif i.lower() in android_keyword:
-                        print(i.lower())
-                        reco_field = 'Android Development'
-                        st.success("** Our analysis says you are looking for Android App Development Jobs **")
-                        recommended_skills = ['Android','Android development','Flutter','Kotlin','XML','Java','Kivy','GIT','SDK','SQLite']
-                        recommended_keywords = st_tags(label='### Recommended skills for you.',
-                        text='Recommended skills generated from System',value=recommended_skills,key = '4')
-                        st.markdown('''<h5 style='text-align: left; color: #1ed760;'>Adding this skills to resume will boost🚀 the chances of getting a Job💼</h5>''',unsafe_allow_html=True)
-                        # course recommendation
-                        rec_course = course_recommender(android_course)
-                        break
+                domain_courses = {
+                    'Data Science': ds_course,
+                    'Web Development': web_course,
+                    'Android Development': android_course,
+                    'IOS Development': ios_course,
+                    'UI-UX Development': uiux_course,
+                }
 
-                    #### IOS App Development
-                    elif i.lower() in ios_keyword:
-                        print(i.lower())
-                        reco_field = 'IOS Development'
-                        st.success("** Our analysis says you are looking for IOS App Development Jobs **")
-                        recommended_skills = ['IOS','IOS Development','Swift','Cocoa','Cocoa Touch','Xcode','Objective-C','SQLite','Plist','StoreKit',"UI-Kit",'AV Foundation','Auto-Layout']
-                        recommended_keywords = st_tags(label='### Recommended skills for you.',
-                        text='Recommended skills generated from System',value=recommended_skills,key = '5')
-                        st.markdown('''<h5 style='text-align: left; color: #1ed760;'>Adding this skills to resume will boost🚀 the chances of getting a Job💼</h5>''',unsafe_allow_html=True)
-                        # course recommendation
-                        rec_course = course_recommender(ios_course)
-                        break
+                # Match scoring
+                domain_scores = {}
+                for domain, keywords in domain_keywords.items():
+                    score = 0
+                    for kw in keywords:
+                        kw_clean = kw.lower().replace(' ', '')
+                        # Skill match (exact cleaned)
+                        if kw_clean in resume_skills_cleaned:
+                            score += 2  # stronger signal
+                        # Text match (partial)
+                        elif re.search(r'\b' + re.escape(kw.lower()) + r'\b', resume_text_cleaned):
+                            score += 1
+                    domain_scores[domain] = score
 
-                    #### Ui-UX Recommendation
-                    elif i.lower() in uiux_keyword:
-                        print(i.lower())
-                        reco_field = 'UI-UX Development'
-                        st.success("** Our analysis says you are looking for UI-UX Development Jobs **")
-                        recommended_skills = ['UI','User Experience','Adobe XD','Figma','Zeplin','Balsamiq','Prototyping','Wireframes','Storyframes','Adobe Photoshop','Editing','Illustrator','After Effects','Premier Pro','Indesign','Wireframe','Solid','Gsap','User Research']
-                        recommended_keywords = st_tags(label='### Recommended skills for you.',
-                        text='Recommended skills generated from System',value=recommended_skills,key = '6')
-                        st.markdown('''<h5 style='text-align: left; color: #1ed760;'>Adding this skills to resume will boost🚀 the chances of getting a Job💼</h5>''',unsafe_allow_html=True)
-                        # course recommendation
-                        rec_course = course_recommender(uiux_course)
-                        break
+                # Pick best scoring domain
+                reco_field = max(domain_scores, key=domain_scores.get)
+                score = domain_scores[reco_field]
 
-                    #### For Not Any Recommendations
-                    elif i.lower() in n_any:
-                        print(i.lower())
-                        reco_field = 'NA'
-                        st.warning("** Currently our tool only predicts and recommends for Data Science, Web, Android, IOS and UI/UX Development**")
-                        recommended_skills = ['No Recommendations']
-                        recommended_keywords = st_tags(label='### Recommended skills for you.',
-                        text='Currently No Recommendations',value=recommended_skills,key = '6')
-                        st.markdown('''<h5 style='text-align: left; color: #092851;'>Maybe Available in Future Updates</h5>''',unsafe_allow_html=True)
-                        # course recommendation
-                        rec_course = "Sorry! Not Available for this Field"
-                        break
+                # UI
+                if score == 0:
+                    st.warning("**We couldn't confidently predict your field. Try adding more technical keywords to your resume.**")
+                    reco_field = 'NA'
+                    recommended_skills = ['No Recommendations']
+                    rec_course = "Sorry! Not Available for this Field"
+                    st_tags(label='### Recommended skills for you.', text='Currently No Recommendations', value=recommended_skills, key='reco_none')
+                else:
+                    st.success(f"**Our analysis says you are looking for {reco_field} Jobs.**")
+                    # Recommend skills not in resume
+                    all_resume_tokens = set(resume_skills_cleaned)
+                    all_resume_tokens.update(re.findall(r'\w+', resume_text_cleaned))
+
+                    recommended_skills = [
+                        kw for kw in domain_keywords[reco_field]
+                        if kw.lower().replace(' ', '') not in all_resume_tokens
+                    ]
+
+                    st_tags(label='### Recommended skills for you.',
+                            text='Recommended skills generated from System',
+                            value=recommended_skills,
+                            key=f'reco_{reco_field.lower().replace(" ", "_")}')
+
+                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>Adding these skills to your resume will boost🚀 the chances of getting a Job💼</h5>''',
+                                unsafe_allow_html=True)
+
+                    rec_course = course_recommender(domain_courses[reco_field])
+
+
 
 
                 ## Resume Scorer & Resume Writing Tips
                 st.subheader("**Resume Tips & Ideas 🥂**")
+
+
+                text = resume_text.lower()
+
+                # 2) Define your rubrics in one place
+                sections = {
+                    'objective_summary': {
+                        'keywords': ['objective', 'summary'],
+                        'weight': 6,
+                        'label': "Objective/Summary",
+                        'colour': '#1ed760',
+                        'success': "Awesome! You have added an Objective or Summary.",
+                        'fail': "Please add your career objective or summary—this orients recruiters to your goals."
+                    },
+                    'education': {
+                        'keywords': ['education', 'school', 'college', 'degree'],
+                        'weight': 12,
+                        'label': "Education",
+                        'colour': '#1ed760',
+                        'success': "Awesome! You have added Education details.",
+                        'fail': "Please list your education to show your qualification level."
+                    },
+                    'experience': {
+                        # Use regex to match “experience” as a whole word or “work experience”
+                        'regex': [r'\bexperience\b', r'\bwork experience\b'],
+                        'weight': 16,
+                        'label': "Experience",
+                        'colour': '#1ed760',
+                        'success': "Awesome! You have added Work Experience.",
+                        'fail': "Please add work experience to stand out from the crowd."
+                    },
+                    'internships': {
+                        'keywords': ['internship', 'internships'],
+                        'weight': 6,
+                        'label': "Internships",
+                        'colour': '#1ed760',
+                        'success': "Awesome! You have added Internships.",
+                        'fail': "Please add internships to demonstrate hands-on learning."
+                    },
+                    'skills': {
+                        'keywords': ['skills', 'skill'],
+                        'weight': 7,
+                        'label': "Skills",
+                        'colour': '#1ed760',
+                        'success': "Awesome! You have added Skills.",
+                        'fail': "Please add skills to show what you bring to the table."
+                    },
+                    'hobbies': {
+                        'keywords': ['hobbies', 'hobby'],
+                        'weight': 4,
+                        'label': "Hobbies",
+                        'colour': '#1ed760',
+                        'success': "Awesome! You have added Hobbies.",
+                        'fail': "Please add hobbies to reveal your personality."
+                    },
+                    'interests': {
+                        'keywords': ['interests', 'interest'],
+                        'weight': 5,
+                        'label': "Interests",
+                        'colour': '#1ed760',
+                        'success': "Awesome! You have added Interests.",
+                        'fail': "Please add interests to showcase passions beyond work."
+                    },
+                    'achievements': {
+                        'keywords': ['achievements', 'achievement'],
+                        'weight': 13,
+                        'label': "Achievements",
+                        'colour': '#1ed760',
+                        'success': "Awesome! You have added Achievements.",
+                        'fail': "Please add achievements to highlight your accomplishments."
+                    },
+                    'certifications': {
+                        'keywords': ['certifications', 'certification'],
+                        'weight': 12,
+                        'label': "Certifications",
+                        'colour': '#1ed760',
+                        'success': "Awesome! You have added Certifications.",
+                        'fail': "Please add certifications to show your specializations."
+                    },
+                    'projects': {
+                        'keywords': ['projects', 'project'],
+                        'weight': 19,
+                        'label': "Projects",
+                        'colour': '#1ed760',
+                        'success': "Awesome! You have added Projects.",
+                        'fail': "Please add projects to demonstrate relevant work."
+                    }
+                }
+
+                # 3) Score and render
                 resume_score = 0
-                
-                ### Predicting Whether these key points are added to the resume
-                if 'Objective' or 'Summary' in resume_text:
-                    resume_score = resume_score+6
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Objective/Summary</h4>''',unsafe_allow_html=True)                
-                else:
-                    st.markdown('''<h5 style='text-align: left; color: #000000;'>[-] Please add your career objective, it will give your career intension to the Recruiters.</h4>''',unsafe_allow_html=True)
+                max_score = sum(info['weight'] for info in sections.values())
 
-                if 'Education' or 'School' or 'College'  in resume_text:
-                    resume_score = resume_score + 12
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Education Details</h4>''',unsafe_allow_html=True)
-                else:
-                    st.markdown('''<h5 style='text-align: left; color: #000000;'>[-] Please add Education. It will give Your Qualification level to the recruiter</h4>''',unsafe_allow_html=True)
+                for key, info in sections.items():
+                    found = False
 
-                if 'EXPERIENCE' in resume_text:
-                    resume_score = resume_score + 16
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Experience</h4>''',unsafe_allow_html=True)
-                elif 'Experience' in resume_text:
-                    resume_score = resume_score + 16
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Experience</h4>''',unsafe_allow_html=True)
-                else:
-                    st.markdown('''<h5 style='text-align: left; color: #000000;'>[-] Please add Experience. It will help you to stand out from crowd</h4>''',unsafe_allow_html=True)
+                    # Keyword-based check
+                    if 'keywords' in info:
+                        for kw in info['keywords']:
+                            if kw in text:
+                                found = True
+                                break
 
-                if 'INTERNSHIPS'  in resume_text:
-                    resume_score = resume_score + 6
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Internships</h4>''',unsafe_allow_html=True)
-                elif 'INTERNSHIP'  in resume_text:
-                    resume_score = resume_score + 6
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Internships</h4>''',unsafe_allow_html=True)
-                elif 'Internships'  in resume_text:
-                    resume_score = resume_score + 6
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Internships</h4>''',unsafe_allow_html=True)
-                elif 'Internship'  in resume_text:
-                    resume_score = resume_score + 6
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Internships</h4>''',unsafe_allow_html=True)
-                else:
-                    st.markdown('''<h5 style='text-align: left; color: #000000;'>[-] Please add Internships. It will help you to stand out from crowd</h4>''',unsafe_allow_html=True)
+                    # Regex-based check
+                    elif 'regex' in info:
+                        for pattern in info['regex']:
+                            if re.search(pattern, text):
+                                found = True
+                                break
 
-                if 'SKILLS'  in resume_text:
-                    resume_score = resume_score + 7
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Skills</h4>''',unsafe_allow_html=True)
-                elif 'SKILL'  in resume_text:
-                    resume_score = resume_score + 7
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Skills</h4>''',unsafe_allow_html=True)
-                elif 'Skills'  in resume_text:
-                    resume_score = resume_score + 7
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Skills</h4>''',unsafe_allow_html=True)
-                elif 'Skill'  in resume_text:
-                    resume_score = resume_score + 7
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added Skills</h4>''',unsafe_allow_html=True)
-                else:
-                    st.markdown('''<h5 style='text-align: left; color: #000000;'>[-] Please add Skills. It will help you a lot</h4>''',unsafe_allow_html=True)
+                    # Update score & display
+                    if found:
+                        resume_score += info['weight']
+                        st.markdown(
+                            f"<h5 style='text-align:left; color:{info['colour']}'>[+] {info['success']}</h5>",
+                            unsafe_allow_html=True
+                        )
+                    else:
+                        st.markdown(
+                            f"<h5 style='text-align:left; color:#fff'>[-] {info['fail']}</h5>",
+                            unsafe_allow_html=True
+                        )
 
-                if 'HOBBIES' in resume_text:
-                    resume_score = resume_score + 4
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Hobbies</h4>''',unsafe_allow_html=True)
-                elif 'Hobbies' in resume_text:
-                    resume_score = resume_score + 4
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Hobbies</h4>''',unsafe_allow_html=True)
-                else:
-                    st.markdown('''<h5 style='text-align: left; color: #000000;'>[-] Please add Hobbies. It will show your personality to the Recruiters and give the assurance that you are fit for this role or not.</h4>''',unsafe_allow_html=True)
-
-                if 'INTERESTS'in resume_text:
-                    resume_score = resume_score + 5
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Interest</h4>''',unsafe_allow_html=True)
-                elif 'Interests'in resume_text:
-                    resume_score = resume_score + 5
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Interest</h4>''',unsafe_allow_html=True)
-                else:
-                    st.markdown('''<h5 style='text-align: left; color: #000000;'>[-] Please add Interest. It will show your interest other that job.</h4>''',unsafe_allow_html=True)
-
-                if 'ACHIEVEMENTS' in resume_text:
-                    resume_score = resume_score + 13
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Achievements </h4>''',unsafe_allow_html=True)
-                elif 'Achievements' in resume_text:
-                    resume_score = resume_score + 13
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Achievements </h4>''',unsafe_allow_html=True)
-                else:
-                    st.markdown('''<h5 style='text-align: left; color: #000000;'>[-] Please add Achievements. It will show that you are capable for the required position.</h4>''',unsafe_allow_html=True)
-
-                if 'CERTIFICATIONS' in resume_text:
-                    resume_score = resume_score + 12
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Certifications </h4>''',unsafe_allow_html=True)
-                elif 'Certifications' in resume_text:
-                    resume_score = resume_score + 12
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Certifications </h4>''',unsafe_allow_html=True)
-                elif 'Certification' in resume_text:
-                    resume_score = resume_score + 12
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Certifications </h4>''',unsafe_allow_html=True)
-                else:
-                    st.markdown('''<h5 style='text-align: left; color: #000000;'>[-] Please add Certifications. It will show that you have done some specialization for the required position.</h4>''',unsafe_allow_html=True)
-
-                if 'PROJECTS' in resume_text:
-                    resume_score = resume_score + 19
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Projects</h4>''',unsafe_allow_html=True)
-                elif 'PROJECT' in resume_text:
-                    resume_score = resume_score + 19
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Projects</h4>''',unsafe_allow_html=True)
-                elif 'Projects' in resume_text:
-                    resume_score = resume_score + 19
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Projects</h4>''',unsafe_allow_html=True)
-                elif 'Project' in resume_text:
-                    resume_score = resume_score + 19
-                    st.markdown('''<h5 style='text-align: left; color: #1ed760;'>[+] Awesome! You have added your Projects</h4>''',unsafe_allow_html=True)
-                else:
-                    st.markdown('''<h5 style='text-align: left; color: #000000;'>[-] Please add Projects. It will show that you have done work related the required position or not.</h4>''',unsafe_allow_html=True)
+                # 4) Final tally
+                st.markdown(
+                    f"<h4 style='text-align:left;'>Your resume score: <strong>{resume_score}</strong> / {max_score}</h4>",
+                    unsafe_allow_html=True
+                )
 
                 st.subheader("**Resume Score 📝**")
                 
@@ -529,9 +611,6 @@ def run():
                 st.success('** Your Resume Writing Score: ' + str(score)+'**')
                 st.warning("** Note: This score is calculated based on the content that you have in your Resume. **")
 
-                # print(str(sec_token), str(ip_add), (host_name), (dev_user), (os_name_ver), (latlong), (city), (state), (country), (act_name), (act_mail), (act_mob), resume_data['name'], resume_data['email'], str(resume_score), timestamp, str(resume_data['no_of_pages']), reco_field, cand_level, str(resume_data['skills']), str(recommended_skills), str(rec_course), pdf_name)
-
-
                 ### Getting Current Date and Time
                 ts = time.time()
                 cur_date = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
@@ -553,7 +632,7 @@ def run():
                 st.video(interview_vid)
 
                 ## On Successful Result 
-                st.balloons()
+                # st.balloons()
 
             else:
                 st.error('Something went wrong..')                
@@ -583,7 +662,7 @@ def run():
                 ## Success Message 
                 st.success("Thanks! Your Feedback was recorded.") 
                 ## On Successful Submit
-                st.balloons()    
+                # st.balloons()    
 
 
         # query to fetch data from user feedback table
@@ -608,7 +687,7 @@ def run():
 
         st.subheader("**User Comment's**")
         dff = pd.DataFrame(plfeed_cmt_data, columns=['User','Rating', 'Comment'])
-        st.dataframe(dff, width=1000)
+        st.dataframe(dff, width=2000)
 
     
     ###### CODE FOR ABOUT PAGE ######
