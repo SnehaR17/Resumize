@@ -28,6 +28,18 @@ from Courses import ds_course,web_course,android_course,ios_course,uiux_course,r
 import nltk
 from linkedin_api import Linkedin
 
+# from dotenv import load_dotenv
+# import toml
+
+# # Load secrets from .env.toml
+# secrets = toml.load(".env.toml")["secrets"]
+
+# Set env variables (optional if your platform injects automatically)
+# os.environ["DB_HOST"] = secrets["DB_HOST"]
+# os.environ["DB_USER"] = secrets["DB_USER"]
+# os.environ["DB_PASSWORD"] = secrets["DB_PASSWORD"]
+# os.environ["DB_NAME"] = secrets["DB_NAME"]
+
 nltk.download('stopwords')
 
 
@@ -92,7 +104,14 @@ def course_recommender(course_list):
 
 
 # sql connector
-connection = pymysql.connect(host='localhost',user='root',password='03jan@1978#',db='cv')
+# connection = pymysql.connect(host='localhost',user='root',password='03jan@1978#',db='cv')
+connection = pymysql.connect(
+    host=st.secrets["mysql"]["host"],
+    user=st.secrets["mysql"]["user"],
+    password=st.secrets["mysql"]["password"],
+    db=st.secrets["mysql"]["database"]
+)
+
 cursor = connection.cursor()
 
 
@@ -127,13 +146,14 @@ st.set_page_config(
 
 import requests
 
+
 def fetch_linkedin_jobs(reco_field, location="India"):
     url = "https://serpapi.com/search.json"
     params = {
         "engine": "google_jobs",
         "q": reco_field,
         "location": location,
-        "api_key": "44e5c6cac45f8d20c7e00c44c2af2920e4d516caab9bfe1ab3df8d610c491b9a"  # replace this with your real API key
+        "api_key": st.secrets["api"]["serpapi_key"]  
     }
 
     response = requests.get(url, params=params)

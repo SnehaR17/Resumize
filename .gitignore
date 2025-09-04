@@ -1,2 +1,4 @@
 venvapp/
 App/__pycache__/
+App/Uploaded_Resumes/
+App/.streamlit/secrets.toml
