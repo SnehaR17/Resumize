@@ -15,6 +15,9 @@ import plotly.express as px # to create visualisations at the admin session
 import plotly.graph_objects as go
 from geopy.geocoders import Nominatim
 # libraries used to parse the pdf files
+import nltk
+nltk.download('stopwords')
+
 from pyresparser import ResumeParser
 from pdfminer3.layout import LAParams, LTTextBox
 from pdfminer3.pdfpage import PDFPage
@@ -25,7 +28,7 @@ from streamlit_tags import st_tags
 from PIL import Image
 # pre stored data for prediction purposes
 from Courses import ds_course,web_course,android_course,ios_course,uiux_course,resume_videos,interview_videos
-import nltk
+
 from linkedin_api import Linkedin
 
 # from dotenv import load_dotenv
@@ -40,7 +43,6 @@ from linkedin_api import Linkedin
 # os.environ["DB_PASSWORD"] = secrets["DB_PASSWORD"]
 # os.environ["DB_NAME"] = secrets["DB_NAME"]
 
-nltk.download('stopwords')
 
 
 ###### Preprocessing functions ######
