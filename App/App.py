@@ -109,6 +109,7 @@ def course_recommender(course_list):
 # connection = pymysql.connect(host='localhost',user='root',password='03jan@1978#',db='cv')
 connection = pymysql.connect(
     host=st.secrets["mysql"]["host"],
+    port=int(st.secrets["mysql"]["port"]),
     user=st.secrets["mysql"]["user"],
     password=st.secrets["mysql"]["password"],
     db=st.secrets["mysql"]["database"]
@@ -191,7 +192,7 @@ def run():
 
 
     # Create the DB
-    db_sql = """CREATE DATABASE IF NOT EXISTS CV;"""
+    db_sql = """CREATE DATABASE IF NOT EXISTS defaultdb;"""
     cursor.execute(db_sql)
 
 
