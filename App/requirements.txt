@@ -31,6 +31,7 @@ joblib==1.1.0
 jsonschema==4.15.0
 kiwisolver==1.4.4
 langcodes==3.3.0
+linkedin-api
 MarkupSafe==2.1.1
 matplotlib==3.5.3
 murmurhash==1.0.8
