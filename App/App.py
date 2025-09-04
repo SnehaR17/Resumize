@@ -26,6 +26,8 @@ from PIL import Image
 # pre stored data for prediction purposes
 from Courses import ds_course,web_course,android_course,ios_course,uiux_course,resume_videos,interview_videos
 import nltk
+from linkedin_api import Linkedin
+
 nltk.download('stopwords')
 
 
@@ -121,6 +123,32 @@ st.set_page_config(
    page_title="Resumize | AI Resume Analyzer",
    page_icon='./Logo/RESUM.png',
 )
+
+
+import requests
+
+def fetch_linkedin_jobs(reco_field, location="India"):
+    url = "https://serpapi.com/search.json"
+    params = {
+        "engine": "google_jobs",
+        "q": reco_field,
+        "location": location,
+        "api_key": "44e5c6cac45f8d20c7e00c44c2af2920e4d516caab9bfe1ab3df8d610c491b9a"  # replace this with your real API key
+    }
+
+    response = requests.get(url, params=params)
+    results = response.json()
+
+    print(results["jobs_results"][0].keys())
+
+    # jobs = []
+    # if "jobs_results" in results:
+    #     for job in results["jobs_results"]:
+    #         job_title = job.get("title")
+    #         job_link = job.get("link")
+    #         if job_title and job_link:
+    #             jobs.append(f"{job_title} - {job_link}")
+    return results["jobs_results"][0:5]
 
 
 ###### Main function run() ######
@@ -630,6 +658,29 @@ def run():
                 st.header("**Bonus Video for Interview Tips💡**")
                 interview_vid = random.choice(interview_videos)
                 st.video(interview_vid)
+
+                # Linkedin Jobs
+                st.header("**🔍 Recommended Jobs for You**")
+                job_data = fetch_linkedin_jobs(reco_field)
+
+                if not job_data:
+                    st.warning("No job recommendations available.")
+                    return
+
+                for job in job_data:
+                    title = job.get("title", "Unknown Title")
+                    company = job.get("company_name", "Unknown Company")
+                    location = job.get("location", "Unknown Location")
+                    link = job.get("share_link", "#")
+
+                    st.markdown(f"**{title}** at *{company}*  \n📍 {location}  \n🔗 [Apply Now]({link})")
+                    st.markdown("---")
+
+                # print("\n-----------------------------------------------------------------------------\n")
+                
+                # print(jobs)
+                # print("\n-----------------------------------------------------------------------------\n")
+
 
                 ## On Successful Result 
                 # st.balloons()
